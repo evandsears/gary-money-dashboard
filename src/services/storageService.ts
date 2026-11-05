@@ -13,14 +13,64 @@ import { db } from '../config/firebase.ts';
 import { 
   type Transaction, 
   type UserSettings, 
+  type Subscription,
   DEFAULT_EXPENSE_CATEGORIES, 
   DEFAULT_INCOME_CATEGORIES 
 } from '../types/index.ts';
 
 const LOCAL_TX_KEY = 'budget-transactions';
+const LOCAL_SUBS_KEY = 'gary-subscriptions';
 const LOCAL_EXPENSE_CAT_KEY = 'gary-expense-categories';
 const LOCAL_INCOME_CAT_KEY = 'gary-income-categories';
 const LOCAL_BUDGET_KEY = 'gary-budget';
+
+const SAMPLE_SUBSCRIPTIONS: Subscription[] = [
+  {
+    id: 'sub-1',
+    name: 'Netflix 4K Premium',
+    amount: 22.99,
+    billingCycle: 'monthly',
+    category: 'Entertainment',
+    paymentMethod: 'Credit Card',
+    renewalDay: 15,
+    vibe: 4,
+    isActive: true,
+    notes: 'Family sharing'
+  },
+  {
+    id: 'sub-2',
+    name: 'Spotify Premium Individual',
+    amount: 11.99,
+    billingCycle: 'monthly',
+    category: 'Entertainment',
+    paymentMethod: 'Debit Card',
+    renewalDay: 8,
+    vibe: 5,
+    isActive: true
+  },
+  {
+    id: 'sub-3',
+    name: 'Gym & Fitness Center',
+    amount: 49.00,
+    billingCycle: 'monthly',
+    category: 'Healthcare',
+    paymentMethod: 'Bank Transfer',
+    renewalDay: 1,
+    vibe: 4,
+    isActive: true
+  },
+  {
+    id: 'sub-4',
+    name: 'iCloud+ 2TB Storage',
+    amount: 9.99,
+    billingCycle: 'monthly',
+    category: 'Utilities',
+    paymentMethod: 'Credit Card',
+    renewalDay: 22,
+    vibe: 5,
+    isActive: true
+  }
+];
 
 // Sample starting transactions for first-time onboarding
 const SAMPLE_TRANSACTIONS: Transaction[] = [
@@ -96,6 +146,23 @@ export const getLocalTransactions = (): Transaction[] => {
 
 export const saveLocalTransactions = (txs: Transaction[]) => {
   localStorage.setItem(LOCAL_TX_KEY, JSON.stringify(txs));
+};
+
+export const getLocalSubscriptions = (): Subscription[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_SUBS_KEY);
+    if (!raw) {
+      localStorage.setItem(LOCAL_SUBS_KEY, JSON.stringify(SAMPLE_SUBSCRIPTIONS));
+      return SAMPLE_SUBSCRIPTIONS;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return SAMPLE_SUBSCRIPTIONS;
+  }
+};
+
+export const saveLocalSubscriptions = (subs: Subscription[]) => {
+  localStorage.setItem(LOCAL_SUBS_KEY, JSON.stringify(subs));
 };
 
 export const getLocalSettings = (): UserSettings => {
@@ -180,6 +247,43 @@ export const updateTransactionInFirestore = async (userId: string, tx: Transacti
 export const deleteTransactionFromFirestore = async (userId: string, txId: string) => {
   if (!db) return;
   const docRef = doc(db, 'users', userId, 'transactions', txId);
+  await deleteDoc(docRef);
+};
+
+export const subscribeToUserSubscriptions = (
+  userId: string,
+  onUpdate: (subs: Subscription[]) => void
+) => {
+  if (!db) return () => {};
+  const subsRef = collection(db, 'users', userId, 'subscriptions');
+  const q = query(subsRef, orderBy('amount', 'desc'));
+
+  return onSnapshot(q, (snapshot) => {
+    const items: Subscription[] = [];
+    snapshot.forEach((docSnap) => {
+      items.push({ id: docSnap.id, ...docSnap.data() } as Subscription);
+    });
+    onUpdate(items);
+  }, (err) => {
+    console.error('Firestore subscriptions subscribe error:', err);
+  });
+};
+
+export const addSubscriptionToFirestore = async (userId: string, sub: Subscription) => {
+  if (!db) return;
+  const docRef = doc(db, 'users', userId, 'subscriptions', sub.id);
+  await setDoc(docRef, { ...sub, updatedAt: new Date().toISOString() });
+};
+
+export const updateSubscriptionInFirestore = async (userId: string, sub: Subscription) => {
+  if (!db) return;
+  const docRef = doc(db, 'users', userId, 'subscriptions', sub.id);
+  await updateDoc(docRef, { ...sub, updatedAt: new Date().toISOString() });
+};
+
+export const deleteSubscriptionFromFirestore = async (userId: string, subId: string) => {
+  if (!db) return;
+  const docRef = doc(db, 'users', userId, 'subscriptions', subId);
   await deleteDoc(docRef);
 };
 

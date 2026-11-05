@@ -1,9 +1,11 @@
 import React from 'react';
-import { SlidersHorizontal, LogIn } from 'lucide-react';
+import { SlidersHorizontal, LogIn, Receipt, Repeat } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface HeaderProps {
+  activeSection: 'ledger' | 'subscriptions';
+  setActiveSection: (sec: 'ledger' | 'subscriptions') => void;
   viewMode: 'monthly' | 'yearly';
   setViewMode: (mode: 'monthly' | 'yearly') => void;
   selectedMonth: string; // YYYY-MM
@@ -17,6 +19,8 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  activeSection,
+  setActiveSection,
   viewMode,
   setViewMode,
   selectedMonth,
@@ -33,63 +37,97 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="flex justify-between items-start sm:items-center h-auto shrink-0 flex-col sm:flex-row gap-4 sm:gap-0 mt-2">
       <div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-4xl font-black tracking-tight text-emerald-950 font-display underline decoration-emerald-500/40 underline-offset-8">
             GARY
           </h1>
-          
-          {/* View Switcher Pill */}
+
+          {/* Main App Navigation Switcher */}
           <div className="flex bg-m3-surface-high p-1 rounded-full shadow-m3-1 border border-m3-outline">
             <button
-              onClick={() => setViewMode('monthly')}
-              className={`px-4 py-1.5 text-xs font-bold uppercase rounded-full transition-all ${
-                viewMode === 'monthly'
+              onClick={() => setActiveSection('ledger')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold uppercase rounded-full transition-all ${
+                activeSection === 'ledger'
                   ? 'bg-m3-primary text-m3-on-primary shadow-sm'
-                  : 'text-emerald-900 hover:bg-m3-surface-highest'
+                  : 'text-emerald-950 hover:bg-m3-surface-highest'
               }`}
             >
-              Monthly
+              <Receipt className="w-3.5 h-3.5" />
+              <span>Ledger</span>
             </button>
             <button
-              onClick={() => setViewMode('yearly')}
-              className={`px-4 py-1.5 text-xs font-bold uppercase rounded-full transition-all ${
-                viewMode === 'yearly'
+              onClick={() => setActiveSection('subscriptions')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold uppercase rounded-full transition-all ${
+                activeSection === 'subscriptions'
                   ? 'bg-m3-primary text-m3-on-primary shadow-sm'
-                  : 'text-emerald-900 hover:bg-m3-surface-highest'
+                  : 'text-emerald-950 hover:bg-m3-surface-highest'
               }`}
             >
-              Yearly
+              <Repeat className="w-3.5 h-3.5" />
+              <span>Subscriptions</span>
             </button>
           </div>
+
+          {/* View Switcher Pill (Only in Ledger mode) */}
+          {activeSection === 'ledger' && (
+            <div className="flex bg-m3-surface-high p-1 rounded-full shadow-m3-1 border border-m3-outline">
+              <button
+                onClick={() => setViewMode('monthly')}
+                className={`px-3 py-1 text-[11px] font-bold uppercase rounded-full transition-all ${
+                  viewMode === 'monthly'
+                    ? 'bg-emerald-800 text-white shadow-sm'
+                    : 'text-emerald-900 hover:bg-m3-surface-highest'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setViewMode('yearly')}
+                className={`px-3 py-1 text-[11px] font-bold uppercase rounded-full transition-all ${
+                  viewMode === 'yearly'
+                    ? 'bg-emerald-800 text-white shadow-sm'
+                    : 'text-emerald-900 hover:bg-m3-surface-highest'
+                }`}
+              >
+                Yearly
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Date Selector Breadcrumb */}
+        {/* Subtitle / Date Breadcrumb */}
         <div className="text-xs text-emerald-800/80 font-semibold uppercase tracking-widest mt-2 flex items-center gap-1.5">
-          <span>Personal Finance Ledger —</span>
-          {viewMode === 'monthly' ? (
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent text-emerald-950 font-extrabold uppercase tracking-widest outline-none cursor-pointer appearance-none hover:text-emerald-700 transition-colors"
-            >
-              {availableMonths.map((m) => (
-                <option key={m} value={m} className="text-stone-800">
-                  {format(parseISO(`${m}-01`), 'MMM yyyy')}
-                </option>
-              ))}
-            </select>
+          {activeSection === 'ledger' ? (
+            <>
+              <span>Personal Finance Ledger —</span>
+              {viewMode === 'monthly' ? (
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-transparent text-emerald-950 font-extrabold uppercase tracking-widest outline-none cursor-pointer appearance-none hover:text-emerald-700 transition-colors"
+                >
+                  {availableMonths.map((m) => (
+                    <option key={m} value={m} className="text-stone-800">
+                      {format(parseISO(`${m}-01`), 'MMM yyyy')}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="bg-transparent text-emerald-950 font-extrabold uppercase tracking-widest outline-none cursor-pointer appearance-none hover:text-emerald-700 transition-colors"
+                >
+                  {availableYears.map((y) => (
+                    <option key={y} value={y} className="text-stone-800">
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
           ) : (
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-transparent text-emerald-950 font-extrabold uppercase tracking-widest outline-none cursor-pointer appearance-none hover:text-emerald-700 transition-colors"
-            >
-              {availableYears.map((y) => (
-                <option key={y} value={y} className="text-stone-800">
-                  {y}
-                </option>
-              ))}
-            </select>
+            <span>Recurring Bills & Subscription Audit</span>
           )}
         </div>
       </div>

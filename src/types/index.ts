@@ -1,6 +1,21 @@
 export type TransactionType = 'expense' | 'income';
 export type SpendType = 'normal' | 'abnormal';
 export type VibeScore = 1 | 2 | 3 | 4 | 5;
+export type BillingCycle = 'monthly' | 'yearly' | 'weekly' | 'quarterly';
+
+export interface Subscription {
+  id: string;
+  name: string;
+  amount: number;
+  billingCycle: BillingCycle;
+  category: string;
+  paymentMethod: string;
+  renewalDay: number; // day of month (1-31)
+  nextRenewalDate?: string; // YYYY-MM-DD
+  vibe: VibeScore;
+  isActive: boolean;
+  notes?: string;
+}
 
 export interface Transaction {
   id: string;

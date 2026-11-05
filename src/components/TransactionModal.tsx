@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Plus, Check } from 'lucide-react';
+import { X, Plus, Check, Trash2 } from 'lucide-react';
 import { 
   type Transaction, 
   type TransactionType, 
@@ -13,6 +13,7 @@ interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (tx: Transaction) => void;
+  onDelete?: (id: string) => void;
   existingTransaction?: Transaction | null;
   expenseCategories: string[];
   incomeCategories: string[];
@@ -23,6 +24,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   existingTransaction,
   expenseCategories,
   incomeCategories,
@@ -336,13 +338,31 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-m3-primary text-m3-on-primary font-bold py-3.5 rounded-full shadow-m3-2 active:scale-[0.98] transition-all tracking-wide text-sm mt-3 font-display hover:bg-m3-secondary"
-          >
-            {isEditing ? 'Save Changes' : 'Record Entry'}
-          </button>
+          {/* Submit / Action Buttons */}
+          <div className="flex items-center gap-3 mt-3">
+            {isEditing && onDelete && existingTransaction && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete "${existingTransaction.name}"?`)) {
+                    onDelete(existingTransaction.id);
+                    onClose();
+                  }
+                }}
+                className="px-4 py-3.5 rounded-full border border-rose-300 text-rose-700 hover:bg-rose-50 transition-colors flex items-center justify-center gap-1.5 text-sm font-bold active:scale-[0.98]"
+                title="Delete Entry"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </button>
+            )}
+            <button
+              type="submit"
+              className="flex-1 bg-m3-primary text-m3-on-primary font-bold py-3.5 rounded-full shadow-m3-2 active:scale-[0.98] transition-all tracking-wide text-sm font-display hover:bg-m3-secondary"
+            >
+              {isEditing ? 'Save Changes' : 'Record Entry'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
